@@ -9,6 +9,21 @@ export default defineConfig({
     vue(),
     dts({
       insertTypesEntry: true,
+      outDir: resolve(__dirname, 'dist/types'),
+      include: ['src/**/*.ts', 'src/**/*.vue'],
+      copyDtsFiles: true,
+      compilerOptions: {
+        baseUrl: '.',
+        paths: {
+          '@/*': ['src/*']
+        }
+      },
+      beforeWriteFile: (filePath, content) => {
+        return {
+          filePath: filePath,
+          content: content
+        }
+      }
     }),
   ],
   build: {
@@ -16,13 +31,21 @@ export default defineConfig({
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'VueCameraKit',
       fileName: (format) => `vue-camera-kit.${format}.js`,
+      formats: ['es', 'umd']
     },
+    outDir: resolve(__dirname, 'dist'),
+    emptyOutDir: true,
+    cssCodeSplit: true,
     rollupOptions: {
-      external: ['vue'],
+      external: ['vue', '@vueuse/core'],
       output: {
         globals: {
           vue: 'Vue',
+          '@vueuse/core': 'VueUse'
         },
+        assetFileNames: (assetInfo) => {
+          return assetInfo.name === 'style.css' ? 'vue-camera-kit.css' : assetInfo.name || 'unknown'
+        }
       },
     },
   },

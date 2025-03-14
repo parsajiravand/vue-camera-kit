@@ -1,17 +1,18 @@
 {
   "name": "vue-camera-kit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A versatile Vue 3 camera component for capturing photos and videos with advanced features",
-  "author": "",
+  "author": "Parsa Jiravand",
+  "email": "parsa.jiravand@gmail.com",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/vue-camera-kit"
+    "url": "https://github.com/parsajiravand/vue-camera-kit"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/vue-camera-kit/issues"
+    "url": "https://github.com/parsajiravand/vue-camera-kit/issues"
   },
-  "homepage": "https://github.com/yourusername/vue-camera-kit#readme",
+  "homepage": "https://github.com/parsajiravand/vue-camera-kit#readme",
   "keywords": [
     "vue",
     "vue3",
@@ -24,16 +25,17 @@
     "vue-component",
     "typescript"
   ],
-  "main": "dist/vue-camera-kit.umd.js",
-  "module": "dist/vue-camera-kit.es.js",
-  "types": "dist/types/index.d.ts",
+  "main": "./dist/vue-camera-kit.umd.js",
+  "module": "./dist/vue-camera-kit.es.js",
+  "types": "./dist/types/index.d.ts",
+  "style": "./dist/vue-camera-kit.css",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
       "import": "./dist/vue-camera-kit.es.js",
       "require": "./dist/vue-camera-kit.umd.js"
     },
-    "./style.css": "./dist/style.css"
+    "./dist/style.css": "./dist/vue-camera-kit.css"
   },
   "files": [
     "dist",
@@ -52,7 +54,8 @@
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
-    "vue": "^3.3.0"
+    "vue": "^3.3.0",
+    "@vueuse/core": "^10.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -66,14 +69,11 @@
     "typescript": "^5.3.0",
     "vite": "^5.0.0",
     "vite-plugin-dts": "^3.0.0",
-    "vitest": "^1.0.0"
-  },
-  "dependencies": {
+    "vitest": "^1.0.0",
     "@vueuse/core": "^10.0.0",
     "vue": "^3.3.0"
   },
   "publishConfig": {
     "access": "public"
   }
-} 
 } 
