@@ -10,6 +10,18 @@
       @loadedmetadata="onVideoLoaded"
     />
 
+    <CameraOverlay
+      v-if="showOverlay"
+      :show-grid="showGrid"
+      :grid-type="gridType"
+      :aspect-ratio="aspectRatio"
+      :watermark="watermark"
+      :watermark-alt="watermarkAlt"
+      :watermark-position="watermarkPosition"
+      :watermark-size="watermarkSize"
+      :filter="currentFilter"
+    />
+
     <div class="camera-controls">
       <!-- Camera Switch Button -->
       <button
@@ -19,6 +31,34 @@
         :disabled="isRecording"
       >
         <span class="icon">🔄</span>
+      </button>
+
+      <!-- Grid Toggle Button -->
+      <button
+        v-if="showGridButton"
+        class="control-btn toggle-grid"
+        @click="toggleGrid"
+        :class="{ active: showGrid }"
+      >
+        <span class="icon">⊞</span>
+      </button>
+
+      <!-- Aspect Ratio Button -->
+      <button
+        v-if="showAspectRatioButton"
+        class="control-btn aspect-ratio"
+        @click="cycleAspectRatio"
+      >
+        <span class="icon">⊡</span>
+      </button>
+
+      <!-- Filter Button -->
+      <button
+        v-if="showFilterButton"
+        class="control-btn filters"
+        @click="cycleFilter"
+      >
+        <span class="icon">🎨</span>
       </button>
 
       <!-- Photo Capture Button -->
@@ -59,8 +99,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useDevicesList } from "@vueuse/core";
+import type { GridType, AspectRatio, WatermarkPosition } from '../types';
+import CameraOverlay from './CameraOverlay.vue';
 
 interface Props {
   width?: number;
@@ -69,6 +111,24 @@ interface Props {
   photoQuality?: number;
   videoConstraints?: MediaTrackConstraints;
   showPreviewByDefault?: boolean;
+  
+  // Overlay options
+  showOverlay?: boolean;
+  showGrid?: boolean;
+  gridType?: GridType;
+  aspectRatio?: AspectRatio;
+  watermark?: string;
+  watermarkAlt?: string;
+  watermarkPosition?: WatermarkPosition;
+  watermarkSize?: number;
+  
+  // Control buttons visibility
+  showGridButton?: boolean;
+  showAspectRatioButton?: boolean;
+  showFilterButton?: boolean;
+  
+  // Default filter
+  defaultFilter?: keyof typeof filters;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -78,13 +138,23 @@ const props = withDefaults(defineProps<Props>(), {
   photoQuality: 0.92,
   videoConstraints: () => ({}),
   showPreviewByDefault: true,
+  showOverlay: true,
+  showGrid: false,
+  gridType: 'rule-of-thirds',
+  aspectRatio: 'original',
+  watermarkPosition: 'bottom-right',
+  watermarkSize: 20,
+  showGridButton: true,
+  showAspectRatioButton: true,
+  showFilterButton: true,
+  defaultFilter: 'none'
 });
 
 const emit = defineEmits<{
-  (e: "photo-captured", data: { dataUrl: string; blob: Blob }): void;
-  (e: "video-started"): void;
-  (e: "video-stopped", data: { blob: Blob }): void;
-  (e: "error", error: Error): void;
+  (e: 'photo-captured', data: { dataUrl: string; blob: Blob }): void;
+  (e: 'video-started'): void;
+  (e: 'video-stopped', data: { blob: Blob }): void;
+  (e: 'error', error: Error): void;
 }>();
 
 // Refs
@@ -99,12 +169,63 @@ const showPreview = ref(false);
 
 // Camera devices
 const { devices: cameras } = useDevicesList({
-  navigator: navigator,
+  navigator,
   requestPermissions: true,
-  constraints: { video: true },
+  constraints: { video: true }
 });
 const availableCameras = ref<MediaDeviceInfo[]>([]);
 const currentCameraIndex = ref(0);
+
+// New refs for customization features
+const showGrid = ref(props.showGrid);
+const currentAspectRatio = ref(props.aspectRatio);
+
+// Predefined filters
+const filters = {
+  none: {
+    brightness: 100,
+    contrast: 100,
+    saturate: 100,
+    grayscale: 0,
+    sepia: 0,
+    blur: 0
+  },
+  grayscale: {
+    brightness: 100,
+    contrast: 100,
+    saturate: 100,
+    grayscale: 100,
+    sepia: 0,
+    blur: 0
+  },
+  sepia: {
+    brightness: 100,
+    contrast: 100,
+    saturate: 100,
+    grayscale: 0,
+    sepia: 100,
+    blur: 0
+  },
+  vivid: {
+    brightness: 110,
+    contrast: 120,
+    saturate: 150,
+    grayscale: 0,
+    sepia: 0,
+    blur: 0
+  },
+  soft: {
+    brightness: 100,
+    contrast: 90,
+    saturate: 90,
+    grayscale: 0,
+    sepia: 0,
+    blur: 0.5
+  }
+} as const;
+
+const currentFilterName = ref<keyof typeof filters>(props.defaultFilter);
+const currentFilter = computed(() => filters[currentFilterName.value]);
 
 // Initialize camera
 const initializeCamera = async () => {
@@ -126,7 +247,7 @@ const initializeCamera = async () => {
 
     // Update available cameras
     availableCameras.value = cameras.value.filter(
-      (device) => device.kind === "videoinput"
+      (device: MediaDeviceInfo) => device.kind === "videoinput"
     );
   } catch (error) {
     emit("error", error as Error);
@@ -142,38 +263,70 @@ const switchCamera = async () => {
 
   // Stop current stream
   if (mediaStream.value) {
-    mediaStream.value.getTracks().forEach((track) => track.stop());
+    mediaStream.value.getTracks().forEach((track: MediaStreamTrack) => track.stop());
   }
 
   // Reinitialize with new camera
   await initializeCamera();
 };
 
+// Grid toggle
+const toggleGrid = () => {
+  showGrid.value = !showGrid.value;
+};
+
+// Aspect ratio cycling
+const aspectRatios: AspectRatio[] = ['original', '1:1', '16:9', '4:3', '3:2'];
+const cycleAspectRatio = () => {
+  const currentIndex = aspectRatios.indexOf(currentAspectRatio.value);
+  const nextIndex = (currentIndex + 1) % aspectRatios.length;
+  currentAspectRatio.value = aspectRatios[nextIndex];
+};
+
+// Filter cycling
+const filterNames = Object.keys(filters) as Array<keyof typeof filters>;
+const cycleFilter = () => {
+  const currentIndex = filterNames.indexOf(currentFilterName.value);
+  const nextIndex = (currentIndex + 1) % filterNames.length;
+  currentFilterName.value = filterNames[nextIndex];
+};
+
 // Photo capture
 const capturePhoto = () => {
   if (!videoRef.value) return;
 
-  const canvas = document.createElement("canvas");
+  const canvas = document.createElement('canvas');
   canvas.width = videoRef.value.videoWidth;
   canvas.height = videoRef.value.videoHeight;
 
-  const context = canvas.getContext("2d");
+  const context = canvas.getContext('2d');
   if (!context) return;
+
+  // Apply current filter to canvas
+  const { brightness, contrast, saturate, grayscale, sepia, blur } = currentFilter.value;
+  context.filter = `
+    brightness(${brightness}%)
+    contrast(${contrast}%)
+    saturate(${saturate}%)
+    grayscale(${grayscale}%)
+    sepia(${sepia}%)
+    blur(${blur}px)
+  `;
 
   context.drawImage(videoRef.value, 0, 0);
 
-  const dataUrl = canvas.toDataURL("image/jpeg", props.photoQuality);
+  const dataUrl = canvas.toDataURL('image/jpeg', props.photoQuality);
   canvas.toBlob(
     (blob) => {
       if (!blob) return;
 
       lastCapture.value = dataUrl;
-      lastCaptureType.value = "photo";
+      lastCaptureType.value = 'photo';
       showPreview.value = props.showPreviewByDefault;
 
-      emit("photo-captured", { dataUrl, blob });
+      emit('photo-captured', { dataUrl, blob });
     },
-    "image/jpeg",
+    'image/jpeg',
     props.photoQuality
   );
 };
@@ -361,5 +514,16 @@ defineExpose({});
 
 .preview-controls button:hover {
   background: #0056b3;
+}
+
+.control-btn.active {
+  background: rgba(0, 123, 255, 0.8);
+  color: white;
+}
+
+.control-btn.toggle-grid .icon,
+.control-btn.aspect-ratio .icon,
+.control-btn.filters .icon {
+  font-size: 24px;
 }
 </style>

@@ -1,12 +1,15 @@
-import { App } from 'vue'
+import type { App } from 'vue'
 import Camera from './components/Camera.vue'
+import CameraOverlay from './components/CameraOverlay.vue'
 
-export { Camera }
+export { Camera, CameraOverlay }
+export * from './types'
 
 // Vue plugin installation
 export default {
   install: (app: App): void => {
     app.component('Camera', Camera)
+    app.component('CameraOverlay', CameraOverlay)
   }
 }
 
