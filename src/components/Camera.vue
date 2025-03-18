@@ -19,7 +19,6 @@
       :watermark-alt="watermarkAlt"
       :watermark-position="watermarkPosition"
       :watermark-size="watermarkSize"
-      :filter="currentFilter"
     />
 
     <div class="camera-controls">
@@ -50,15 +49,6 @@
         @click="cycleAspectRatio"
       >
         <span class="icon">⊡</span>
-      </button>
-
-      <!-- Filter Button -->
-      <button
-        v-if="showFilterButton"
-        class="control-btn filters"
-        @click="cycleFilter"
-      >
-        <span class="icon">🎨</span>
       </button>
 
       <!-- Photo Capture Button -->
@@ -126,9 +116,6 @@ interface Props {
   showGridButton?: boolean;
   showAspectRatioButton?: boolean;
   showFilterButton?: boolean;
-  
-  // Default filter
-  defaultFilter?: keyof typeof filters;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -147,7 +134,6 @@ const props = withDefaults(defineProps<Props>(), {
   showGridButton: true,
   showAspectRatioButton: true,
   showFilterButton: true,
-  defaultFilter: 'none'
 });
 
 const emit = defineEmits<{
@@ -180,53 +166,6 @@ const currentCameraIndex = ref(0);
 const showGrid = ref(props.showGrid);
 const currentAspectRatio = ref(props.aspectRatio);
 
-// Predefined filters
-const filters = {
-  none: {
-    brightness: 100,
-    contrast: 100,
-    saturate: 100,
-    grayscale: 0,
-    sepia: 0,
-    blur: 0
-  },
-  grayscale: {
-    brightness: 100,
-    contrast: 100,
-    saturate: 100,
-    grayscale: 100,
-    sepia: 0,
-    blur: 0
-  },
-  sepia: {
-    brightness: 100,
-    contrast: 100,
-    saturate: 100,
-    grayscale: 0,
-    sepia: 100,
-    blur: 0
-  },
-  vivid: {
-    brightness: 110,
-    contrast: 120,
-    saturate: 150,
-    grayscale: 0,
-    sepia: 0,
-    blur: 0
-  },
-  soft: {
-    brightness: 100,
-    contrast: 90,
-    saturate: 90,
-    grayscale: 0,
-    sepia: 0,
-    blur: 0.5
-  }
-} as const;
-
-const currentFilterName = ref<keyof typeof filters>(props.defaultFilter);
-const currentFilter = computed(() => filters[currentFilterName.value]);
-
 // Initialize camera
 const initializeCamera = async () => {
   try {
@@ -237,7 +176,7 @@ const initializeCamera = async () => {
         height: { ideal: props.height },
         ...props.videoConstraints,
       },
-      audio: false,
+      audio: true,
     };
 
     mediaStream.value = await navigator.mediaDevices.getUserMedia(constraints);
@@ -283,14 +222,6 @@ const cycleAspectRatio = () => {
   currentAspectRatio.value = aspectRatios[nextIndex];
 };
 
-// Filter cycling
-const filterNames = Object.keys(filters) as Array<keyof typeof filters>;
-const cycleFilter = () => {
-  const currentIndex = filterNames.indexOf(currentFilterName.value);
-  const nextIndex = (currentIndex + 1) % filterNames.length;
-  currentFilterName.value = filterNames[nextIndex];
-};
-
 // Photo capture
 const capturePhoto = () => {
   if (!videoRef.value) return;
@@ -301,17 +232,6 @@ const capturePhoto = () => {
 
   const context = canvas.getContext('2d');
   if (!context) return;
-
-  // Apply current filter to canvas
-  const { brightness, contrast, saturate, grayscale, sepia, blur } = currentFilter.value;
-  context.filter = `
-    brightness(${brightness}%)
-    contrast(${contrast}%)
-    saturate(${saturate}%)
-    grayscale(${grayscale}%)
-    sepia(${sepia}%)
-    blur(${blur}px)
-  `;
 
   context.drawImage(videoRef.value, 0, 0);
 
@@ -345,7 +265,7 @@ const startRecording = () => {
 
   recordedChunks.value = [];
   mediaRecorder.value = new MediaRecorder(mediaStream.value, {
-    mimeType: "video/webm;codecs=vp9",
+    mimeType: "video/webm",
   });
 
   mediaRecorder.value.ondataavailable = (event) => {
@@ -522,8 +442,7 @@ defineExpose({});
 }
 
 .control-btn.toggle-grid .icon,
-.control-btn.aspect-ratio .icon,
-.control-btn.filters .icon {
+.control-btn.aspect-ratio .icon {
   font-size: 24px;
 }
 </style>

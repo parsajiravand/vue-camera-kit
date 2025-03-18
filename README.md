@@ -2,10 +2,20 @@
 
 A versatile Vue 3 camera component for capturing photos and videos with advanced features.
 
+[![npm version](https://badge.fury.io/js/vue-camera-kit.svg)](https://www.npmjs.com/package/vue-camera-kit)
+[![GitHub](https://img.shields.io/github/license/parsajiravand/vue-camera-kit)](https://github.com/parsajiravand/vue-camera-kit)
+
+## Demo
+
+Try out the live demo: [Vue Camera Kit Demo](https://parsajiravand.github.io/vue-camera-kit)
+
+📦 [NPM Package](https://www.npmjs.com/package/vue-camera-kit)  
+📚 [GitHub Repository](https://github.com/parsajiravand/vue-camera-kit)
+
 ## Features
 
 - 📸 Photo Capture
-- 🎥 Video Recording
+- 🎥 Video Recording with Audio
 - 🔄 Camera Switching (Front/Back)
 - 📏 Customizable Resolution
 - 🖼️ Preview & Retake
@@ -37,7 +47,7 @@ app.mount('#app')
 
 ```vue
 <script setup lang="ts">
-import { Camera } from 'vue-camera-kit'
+import Camera from 'vue-camera-kit'
 </script>
 
 <template>
@@ -76,7 +86,7 @@ import { Camera } from 'vue-camera-kit'
 
 ```vue
 <script setup lang="ts">
-import { Camera } from 'vue-camera-kit'
+import Camera from 'vue-camera-kit'
 import type { PhotoCaptureData, VideoCaptureData } from 'vue-camera-kit'
 
 const onPhotoCaptured = ({ dataUrl, blob }: PhotoCaptureData) => {

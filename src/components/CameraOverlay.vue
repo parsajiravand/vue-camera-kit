@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { GridType, AspectRatio, WatermarkPosition, FilterOptions } from '../types';
+import type { GridType, AspectRatio, WatermarkPosition } from '../types';
 
 interface Props {
   showGrid?: boolean;
@@ -28,7 +28,6 @@ interface Props {
   watermarkAlt?: string;
   watermarkPosition?: WatermarkPosition;
   watermarkSize?: number;
-  filter?: FilterOptions;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -36,30 +35,10 @@ const props = withDefaults(defineProps<Props>(), {
   gridType: 'rule-of-thirds',
   aspectRatio: 'original',
   watermarkPosition: 'bottom-right',
-  watermarkSize: 20,
-  filter: () => ({
-    brightness: 100,
-    contrast: 100,
-    saturate: 100,
-    grayscale: 0,
-    sepia: 0,
-    blur: 0
-  })
+  watermarkSize: 20
 });
 
-const overlayStyles = computed(() => {
-  const { brightness, contrast, saturate, grayscale, sepia, blur } = props.filter;
-  return {
-    filter: `
-      brightness(${brightness}%)
-      contrast(${contrast}%)
-      saturate(${saturate}%)
-      grayscale(${grayscale}%)
-      sepia(${sepia}%)
-      blur(${blur}px)
-    `
-  };
-});
+const overlayStyles = computed(() => ({}));
 
 type PositionStyles = {
   [key in WatermarkPosition]: {

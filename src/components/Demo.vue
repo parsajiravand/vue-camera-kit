@@ -1,7 +1,7 @@
 <template>
   <div class="demo-container">
-    <h1>Vue Camera Kit Demo</h1>
-
+    <Header />
+    
     <div class="camera-container">
       <Camera
         :show-grid="true"
@@ -85,6 +85,7 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from "vue";
 import { Camera } from "../index";
+import Header from './Header.vue';
 import type { PhotoCaptureData, VideoCaptureData } from "../index";
 
 interface Capture {
@@ -183,7 +184,6 @@ defineExpose({});
 .demo-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
 }
 
 h1,
