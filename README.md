@@ -7,7 +7,7 @@ A versatile Vue 3 camera component for capturing photos and videos with advanced
 
 ## Demo
 
-Try out the live demo: [Vue Camera Kit Demo](https://parsajiravand.github.io/vue-camera-kit)
+Try out the live demo: [Vue Camera Kit Demo](https://vue-camera-kit.netlify.app/)
 
 📦 [NPM Package](https://www.npmjs.com/package/vue-camera-kit)  
 📚 [GitHub Repository](https://github.com/parsajiravand/vue-camera-kit)
