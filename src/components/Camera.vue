@@ -1,139 +1,127 @@
 <template>
   <div class="vue-camera-kit" :class="{ 'is-recording': isRecording }">
-    <video
-      ref="videoRef"
-      :width="width"
-      :height="height"
-      autoplay
-      playsinline
-      muted
-      @loadedmetadata="onVideoLoaded"
-    />
+    <template v-if="hasGetUserMedia">
+      <video
+        ref="videoRef"
+        :width="width"
+        :height="height"
+        autoplay
+        playsinline
+        muted
+        :style="videoStyles"
+        @loadedmetadata="onVideoLoaded"
+      />
 
-    <CameraOverlay
-      v-if="showOverlay"
-      :show-grid="showGrid"
-      :grid-type="gridType"
-      :aspect-ratio="aspectRatio"
-      :watermark="watermark"
-      :watermark-alt="watermarkAlt"
-      :watermark-position="watermarkPosition"
-      :watermark-size="watermarkSize"
-    />
+      <CameraOverlay
+        v-if="showOverlay"
+        :show-grid="showGrid"
+        :grid-type="gridType"
+        :aspect-ratio="aspectRatio"
+        :watermark="watermark"
+        :watermark-alt="watermarkAlt"
+        :watermark-position="watermarkPosition"
+        :watermark-size="watermarkSize"
+      />
 
-    <div class="camera-controls">
-      <!-- Camera Switch Button -->
-      <button
-        v-if="availableCameras.length > 1"
-        class="control-btn switch-camera"
-        @click="switchCamera"
-        :disabled="isRecording"
-      >
-        <span class="icon">🔄</span>
-      </button>
+      <div class="camera-controls">
+        <!-- Camera Switch Button -->
+        <button
+          v-if="availableCameras.length > 1"
+          class="control-btn switch-camera"
+          @click="switchCamera"
+          :disabled="isRecording"
+        >
+          <span class="icon">🔄</span>
+        </button>
 
-      <!-- Grid Toggle Button -->
-      <button
-        v-if="showGridButton"
-        class="control-btn toggle-grid"
-        @click="toggleGrid"
-        :class="{ active: showGrid }"
-      >
-        <span class="icon">⊞</span>
-      </button>
+        <!-- Grid Toggle Button -->
+        <button
+          v-if="showGridButton"
+          class="control-btn toggle-grid"
+          @click="toggleGrid"
+          :class="{ active: showGrid }"
+        >
+          <span class="icon">⊞</span>
+        </button>
 
-      <!-- Aspect Ratio Button -->
-      <button
-        v-if="showAspectRatioButton"
-        class="control-btn aspect-ratio"
-        @click="cycleAspectRatio"
-      >
-        <span class="icon">⊡</span>
-      </button>
+        <!-- Aspect Ratio Button -->
+        <button
+          v-if="showAspectRatioButton"
+          class="control-btn aspect-ratio"
+          @click="cycleAspectRatio"
+        >
+          <span class="icon">⊡</span>
+        </button>
 
-      <!-- Photo Capture Button -->
-      <button
-        class="control-btn capture-photo"
-        @click="capturePhoto"
-        :disabled="isRecording"
-      >
-        <span class="icon">📸</span>
-      </button>
+        <!-- Photo Capture Button -->
+        <button
+          class="control-btn capture-photo"
+          @click="capturePhoto"
+          :disabled="isRecording"
+        >
+          <span class="icon">📸</span>
+        </button>
 
-      <!-- Video Recording Button -->
-      <button
-        class="control-btn record-video"
-        @click="toggleRecording"
-        :class="{ 'is-recording': isRecording }"
-      >
-        <span class="icon">🎥</span>
-      </button>
-    </div>
+        <!-- Video Recording Button -->
+        <button
+          class="control-btn record-video"
+          @click="toggleRecording"
+          :class="{ 'is-recording': isRecording }"
+        >
+          <span class="icon">🎥</span>
+        </button>
+      </div>
 
-    <!-- Preview Modal -->
-    <div v-if="showPreview" class="preview-modal">
-      <div class="preview-content">
-        <img
-          v-if="lastCaptureType === 'photo'"
-          :src="lastCapture"
-          alt="Captured photo"
-        />
-        <video v-else :src="lastCapture" controls />
-        <div class="preview-controls">
-          <button @click="acceptCapture">Accept</button>
-          <button @click="retakeCapture">Retake</button>
+      <!-- Preview Modal -->
+      <div v-if="showPreview" class="preview-modal">
+        <div class="preview-content">
+          <img
+            v-if="lastCaptureType === 'photo'"
+            :src="lastCapture"
+            alt="Captured photo"
+          />
+          <video v-else :src="lastCapture" controls />
+          <div class="preview-controls">
+            <button @click="acceptCapture">Accept</button>
+            <button @click="retakeCapture">Retake</button>
+          </div>
         </div>
       </div>
-    </div>
+    </template>
+    <ErrorMessage
+      v-else
+      message="Camera access is not supported in this browser"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import { useDevicesList } from "@vueuse/core";
-import type { GridType, AspectRatio, WatermarkPosition } from '../types';
+import { ref, computed, onMounted, onBeforeUnmount, defineComponent } from 'vue';
+import { useDevicesList } from '@vueuse/core';
 import CameraOverlay from './CameraOverlay.vue';
+import type { CameraProps, AspectRatio } from '../types';
 
-interface Props {
-  width?: number;
-  height?: number;
-  facingMode?: "user" | "environment";
-  photoQuality?: number;
-  videoConstraints?: MediaTrackConstraints;
-  showPreviewByDefault?: boolean;
-  
-  // Overlay options
+interface Props extends CameraProps {
   showOverlay?: boolean;
-  showGrid?: boolean;
-  gridType?: GridType;
-  aspectRatio?: AspectRatio;
-  watermark?: string;
-  watermarkAlt?: string;
-  watermarkPosition?: WatermarkPosition;
-  watermarkSize?: number;
-  
-  // Control buttons visibility
   showGridButton?: boolean;
   showAspectRatioButton?: boolean;
-  showFilterButton?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   width: 640,
   height: 480,
-  facingMode: "environment",
+  facingMode: 'environment',
   photoQuality: 0.92,
   videoConstraints: () => ({}),
   showPreviewByDefault: true,
-  showOverlay: true,
   showGrid: false,
   gridType: 'rule-of-thirds',
   aspectRatio: 'original',
   watermarkPosition: 'bottom-right',
   watermarkSize: 20,
+  showOverlay: true,
   showGridButton: true,
-  showAspectRatioButton: true,
-  showFilterButton: true,
+  showAspectRatioButton: true
 });
 
 const emit = defineEmits<{
@@ -154,21 +142,51 @@ const lastCaptureType = ref<"photo" | "video">("photo");
 const showPreview = ref(false);
 
 // Camera devices
-const { devices: cameras } = useDevicesList({
-  navigator,
+useDevicesList({
   requestPermissions: true,
-  constraints: { video: true }
+  onUpdated() {
+    initializeCamera();
+  },
 });
 const availableCameras = ref<MediaDeviceInfo[]>([]);
-const currentCameraIndex = ref(0);
 
 // New refs for customization features
 const showGrid = ref(props.showGrid);
 const currentAspectRatio = ref(props.aspectRatio);
 
+// Create a ref for facingMode to handle camera switching
+const currentFacingMode = ref(props.facingMode);
+
+// Add these to your setup
+const hasGetUserMedia = computed(() => {
+  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+});
+
+// Add ErrorMessage component
+const ErrorMessage = defineComponent({
+  props: {
+    message: {
+      type: String,
+      required: true
+    }
+  },
+  template: `
+    <div class="camera-error">
+      <p>{{ message }}</p>
+    </div>
+  `
+});
+
 // Initialize camera
 const initializeCamera = async () => {
   try {
+    // Get all video devices first
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    availableCameras.value = devices.filter(
+      device => device.kind === 'videoinput'
+    );
+
+    // Set constraints based on device type and facing mode
     const constraints: MediaStreamConstraints = {
       video: {
         facingMode: props.facingMode,
@@ -179,34 +197,61 @@ const initializeCamera = async () => {
       audio: true,
     };
 
-    mediaStream.value = await navigator.mediaDevices.getUserMedia(constraints);
-    if (videoRef.value) {
-      videoRef.value.srcObject = mediaStream.value;
+    // Stop any existing streams
+    if (mediaStream.value) {
+      mediaStream.value.getTracks().forEach(track => track.stop());
     }
 
-    // Update available cameras
-    availableCameras.value = cameras.value.filter(
-      (device: MediaDeviceInfo) => device.kind === "videoinput"
-    );
+    mediaStream.value = await navigator.mediaDevices.getUserMedia(constraints);
+    
+    if (videoRef.value) {
+      videoRef.value.srcObject = mediaStream.value;
+      // Fix for iOS Safari
+      videoRef.value.setAttribute('playsinline', '');
+      await videoRef.value.play();
+    }
+
   } catch (error) {
-    emit("error", error as Error);
+    console.error('Camera initialization error:', error);
+    emit('error', error as Error);
   }
 };
 
-// Switch camera
+// Improved camera switching function
 const switchCamera = async () => {
-  if (availableCameras.value.length <= 1) return;
+  try {
+    if (availableCameras.value.length <= 1) return;
 
-  currentCameraIndex.value =
-    (currentCameraIndex.value + 1) % availableCameras.value.length;
+    // Toggle facing mode using the ref instead of props
+    currentFacingMode.value = currentFacingMode.value === 'user' ? 'environment' : 'user';
 
-  // Stop current stream
-  if (mediaStream.value) {
-    mediaStream.value.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+    // Stop current stream
+    if (mediaStream.value) {
+      mediaStream.value.getTracks().forEach(track => track.stop());
+    }
+
+    // Get new stream with updated facing mode
+    const constraints: MediaStreamConstraints = {
+      video: {
+        facingMode: currentFacingMode.value,
+        width: { ideal: props.width },
+        height: { ideal: props.height },
+        ...props.videoConstraints,
+      },
+      audio: true,
+    };
+
+    mediaStream.value = await navigator.mediaDevices.getUserMedia(constraints);
+    
+    if (videoRef.value) {
+      videoRef.value.srcObject = mediaStream.value;
+      await videoRef.value.play();
+    }
+
+  } catch (error) {
+    console.error('Camera switch error:', error);
+    emit('error', error as Error);
   }
-
-  // Reinitialize with new camera
-  await initializeCamera();
 };
 
 // Grid toggle
@@ -215,7 +260,13 @@ const toggleGrid = () => {
 };
 
 // Aspect ratio cycling
-const aspectRatios: AspectRatio[] = ['original', '1:1', '16:9', '4:3', '3:2'];
+const aspectRatios: AspectRatio[] = [
+  'original',
+  'aspect-1-1',
+  'aspect-16-9',
+  'aspect-4-3',
+  'aspect-3-2'
+];
 const cycleAspectRatio = () => {
   const currentIndex = aspectRatios.indexOf(currentAspectRatio.value);
   const nextIndex = (currentIndex + 1) % aspectRatios.length;
@@ -313,7 +364,7 @@ onMounted(() => {
   initializeCamera();
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   if (mediaStream.value) {
     mediaStream.value.getTracks().forEach((track) => track.stop());
   }
@@ -325,6 +376,15 @@ onUnmounted(() => {
 const onVideoLoaded = () => {
   // Video element is ready
 };
+
+// Add iOS specific styles
+const videoStyles = computed(() => ({
+  transform: currentFacingMode.value === 'user' ? 'scaleX(-1)' : 'none',
+  width: '100%',
+  height: 'auto',
+  maxWidth: '100%',
+  objectFit: 'cover' as const,
+}));
 
 defineExpose({});
 </script>
@@ -340,10 +400,12 @@ defineExpose({});
   border-radius: 8px;
 }
 
+/* Remove default transform and add it conditionally through videoStyles */
 .vue-camera-kit video {
   width: 100%;
   height: auto;
-  transform: scaleX(-1); /* Mirror effect for front camera */
+  max-width: 100%;
+  object-fit: cover;
 }
 
 .vue-camera-kit.is-recording video {
@@ -444,5 +506,31 @@ defineExpose({});
 .control-btn.toggle-grid .icon,
 .control-btn.aspect-ratio .icon {
   font-size: 24px;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  .camera-controls {
+    padding: 15px;
+    gap: 15px;
+  }
+
+  .control-btn {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* iOS-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .vue-camera-kit video {
+    position: relative;
+    z-index: 1;
+  }
+
+  .camera-controls {
+    position: relative;
+    z-index: 2;
+  }
 }
 </style>

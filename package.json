@@ -1,6 +1,6 @@
 {
   "name": "vue-camera-kit",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A versatile Vue 3 camera component for capturing photos and videos with advanced features",
   "author": "Parsa Jiravand",
   "email": "parsa.jiravand@gmail.com",
