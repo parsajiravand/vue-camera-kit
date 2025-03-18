@@ -37,11 +37,10 @@ export default defineConfig({
     emptyOutDir: true,
     cssCodeSplit: true,
     rollupOptions: {
-      external: ['vue', '@vueuse/core'],
+      external: ['vue'],
       output: {
         globals: {
-          vue: 'Vue',
-          '@vueuse/core': 'VueUse'
+          vue: 'Vue'
         },
         assetFileNames: (assetInfo) => {
           return assetInfo.name === 'style.css' ? 'vue-camera-kit.css' : assetInfo.name || 'unknown'
@@ -55,10 +54,14 @@ export default defineConfig({
     },
   },
   server: {
-    port: 8080,
+    port: 3000,
     open: true,
     strictPort: false, // Allow fallback to another port if 8080 is in use
   },
   root: 'dev',
-  publicDir: '../public',
+  publicDir: 'public',
+  optimizeDeps: {
+    include: ['vue', 'vue-camera-kit'], // Add your package name here
+  },
+  index: 'index.html',
 })

@@ -1,6 +1,6 @@
 {
   "name": "vue-camera-kit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A versatile Vue 3 camera component for capturing photos and videos with advanced features",
   "author": "Parsa Jiravand",
   "email": "parsa.jiravand@gmail.com",
@@ -44,14 +44,16 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "dev": "vite --config vite.config.ts",
-    "build": "npm run clean && tsc && vite build",
-    "preview": "vite preview",
+    "dev": "vite --config dev/vite.config.ts",
+    "build": "vite build",
+    "build:demo": "vite build --config dev/vite.config.ts",
+    "preview": "vite preview --config dev/vite.config.ts",
     "test": "vitest",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "deploy:netlify": "npm run build:demo && netlify deploy --prod"
   },
   "peerDependencies": {
     "vue": "^3.3.0",

@@ -1,11 +1,29 @@
 [build]
+  base = "/"
+  publish = "dist"
   command = "npm run build:demo"
-  publish = "dev"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "18"
+  NPM_FLAGS = "--no-audit --no-fund"
 
 [[redirects]]
   from = "/*"
-  to = "/dev/index.html"
-  status = 200 
+  to = "/index.html"
+  status = 200
+
+[dev]
+  command = "npm run dev"
+  port = 3000
+  publish = "dist"
+  framework = "vite"
+
+# Headers to enable SPA navigation
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: *.netlify.app; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:;" 
