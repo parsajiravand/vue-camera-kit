@@ -20,44 +20,6 @@
       />
     </div>
 
-    <div class="controls-panel">
-      <h2>Settings</h2>
-
-      <div class="control-group">
-        <label>Resolution:</label>
-        <select v-model="selectedResolution">
-          <option value="640x480">640x480 (SD)</option>
-          <option value="1280x720">1280x720 (HD)</option>
-          <option value="1920x1080">1920x1080 (Full HD)</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label>Camera:</label>
-        <select v-model="facingMode">
-          <option value="user">Front Camera</option>
-          <option value="environment">Back Camera</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label>Photo Quality:</label>
-        <input
-          type="range"
-          v-model="photoQuality"
-          min="0.1"
-          max="1.0"
-          step="0.1"
-        />
-        <span>{{ (photoQuality * 100).toFixed(0) }}%</span>
-      </div>
-
-      <div class="control-group">
-        <label>Show Preview:</label>
-        <input type="checkbox" v-model="showPreview" />
-      </div>
-    </div>
-
     <div v-if="captures.length > 0" class="captures-gallery">
       <h2>Captured Media</h2>
       <div class="gallery-grid">
@@ -96,9 +58,6 @@ interface Capture {
 
 // Camera settings
 const selectedResolution = ref("1280x720");
-const facingMode = ref<"user" | "environment">("environment");
-const photoQuality = ref(0.92);
-const showPreview = ref(true);
 
 // Computed camera dimensions
 const dimensions = computed(() => {

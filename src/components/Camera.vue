@@ -7,6 +7,7 @@
         :height="height"
         autoplay
         playsinline
+        webkit-playsinline
         muted
         :style="videoStyles"
         @loadedmetadata="onVideoLoaded"
@@ -180,21 +181,14 @@ const ErrorMessage = defineComponent({
 // Initialize camera
 const initializeCamera = async () => {
   try {
-    // Get all video devices first
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    availableCameras.value = devices.filter(
-      device => device.kind === 'videoinput'
-    );
-
-    // Set constraints based on device type and facing mode
     const constraints: MediaStreamConstraints = {
       video: {
-        facingMode: props.facingMode,
+        facingMode: currentFacingMode.value,
         width: { ideal: props.width },
         height: { ideal: props.height },
         ...props.videoConstraints,
       },
-      audio: true,
+      audio: true
     };
 
     // Stop any existing streams
@@ -202,12 +196,14 @@ const initializeCamera = async () => {
       mediaStream.value.getTracks().forEach(track => track.stop());
     }
 
-    mediaStream.value = await navigator.mediaDevices.getUserMedia(constraints);
-    
+    // Request both video and audio permissions explicitly
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    mediaStream.value = stream;
+
     if (videoRef.value) {
-      videoRef.value.srcObject = mediaStream.value;
-      // Fix for iOS Safari
+      videoRef.value.srcObject = stream;
       videoRef.value.setAttribute('playsinline', '');
+      videoRef.value.setAttribute('webkit-playsinline', '');
       await videoRef.value.play();
     }
 
@@ -311,32 +307,60 @@ const toggleRecording = () => {
   }
 };
 
-const startRecording = () => {
+const startRecording = async () => {
   if (!mediaStream.value) return;
 
-  recordedChunks.value = [];
-  mediaRecorder.value = new MediaRecorder(mediaStream.value, {
-    mimeType: "video/webm",
-  });
+  try {
+    // Set up recording options with proper MIME type and codecs for iOS
+    const options: MediaRecorderOptions = {
+      mimeType: getSupportedMimeType(),
+      videoBitsPerSecond: 2500000, // 2.5 Mbps
+    };
 
-  mediaRecorder.value.ondataavailable = (event) => {
-    if (event.data.size > 0) {
-      recordedChunks.value.push(event.data);
+    recordedChunks.value = [];
+    mediaRecorder.value = new MediaRecorder(mediaStream.value, options);
+
+    mediaRecorder.value.ondataavailable = (event: BlobEvent) => {
+      if (event.data.size > 0) {
+        recordedChunks.value.push(event.data);
+      }
+    };
+
+    mediaRecorder.value.onstop = () => {
+      const blob = new Blob(recordedChunks.value, {
+        type: mediaRecorder.value?.mimeType || 'video/webm'
+      });
+      emit('video-stopped', { blob });
+      isRecording.value = false;
+    };
+
+    mediaRecorder.value.start();
+    isRecording.value = true;
+    emit('video-started');
+  } catch (error) {
+    console.error('Recording error:', error);
+    emit('error', error as Error);
+  }
+};
+
+// Helper function to get supported MIME type
+const getSupportedMimeType = (): string => {
+  const types = [
+    'video/webm;codecs=h264',
+    'video/webm',
+    'video/mp4',
+    'video/mp4;codecs=h264',
+    'video/webm;codecs=vp8,opus',
+  ];
+
+  for (const type of types) {
+    if (MediaRecorder.isTypeSupported(type)) {
+      return type;
     }
-  };
+  }
 
-  mediaRecorder.value.onstop = () => {
-    const blob = new Blob(recordedChunks.value, { type: "video/webm" });
-    lastCapture.value = URL.createObjectURL(blob);
-    lastCaptureType.value = "video";
-    showPreview.value = props.showPreviewByDefault;
-
-    emit("video-stopped", { blob });
-  };
-
-  mediaRecorder.value.start();
-  isRecording.value = true;
-  emit("video-started");
+  // Fallback
+  return 'video/webm';
 };
 
 const stopRecording = () => {
@@ -365,11 +389,11 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  if (mediaStream.value) {
-    mediaStream.value.getTracks().forEach((track) => track.stop());
-  }
   if (mediaRecorder.value && isRecording.value) {
     mediaRecorder.value.stop();
+  }
+  if (mediaStream.value) {
+    mediaStream.value.getTracks().forEach(track => track.stop());
   }
 });
 
@@ -526,11 +550,9 @@ defineExpose({});
   .vue-camera-kit video {
     position: relative;
     z-index: 1;
-  }
-
-  .camera-controls {
-    position: relative;
-    z-index: 2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 }
 </style>
