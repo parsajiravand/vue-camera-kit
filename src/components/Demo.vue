@@ -1,7 +1,7 @@
 <template>
   <div class="demo-container">
     <Header />
-    
+
     <div class="camera-container">
       <Camera
         :show-grid="true"
@@ -10,10 +10,8 @@
         :watermark="'https://i.postimg.cc/258CSGbV/vue3-form-wizard-icon.png'"
         watermark-position="top-right"
         :watermark-size="20"
-        default-filter="vivid"
         :show-grid-button="true"
         :show-aspect-ratio-button="true"
-        :show-filter-button="true"
         @photo-captured="onPhotoCaptured"
         @video-started="onVideoStarted"
         @video-stopped="onVideoStopped"
@@ -47,7 +45,7 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from "vue";
 import { Camera } from "../index";
-import Header from './Header.vue';
+import Header from "./Header.vue";
 import type { PhotoCaptureData, VideoCaptureData } from "../index";
 
 interface Capture {

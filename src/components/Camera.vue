@@ -405,7 +405,7 @@ const onVideoLoaded = () => {
 const videoStyles = computed(() => ({
   transform: currentFacingMode.value === 'user' ? 'scaleX(-1)' : 'none',
   width: '100%',
-  height: 'auto',
+  height: '100%',
   maxWidth: '100%',
   objectFit: 'cover' as const,
 }));
